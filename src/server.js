@@ -6,16 +6,23 @@ const ServerRenderer = require('vue-server-renderer').createRenderer({
 })
 const server = new express()
 const createApp = require('./app.js')
-
-server.get('/vue-ssr', (req, res) => {
-	const app = createApp({})
-	ServerRenderer.renderToString(app, (err, html) => {
-		if (err) {
-      res.status(500).end('Internal Server Error')
-      return;
-    }
-    res.end(html)
+const serverEntry = require('./entry-server')
+server.get('*', (req, res) => {
+	const context = {
+		url: req.url
+	}
+	serverEntry(context).then(app => {
+		ServerRenderer.renderToString(app, (err, html) => {
+			if (err) {
+	      res.status(500).end('Internal Server Error')
+	      return;
+	    }
+	    res.end(html)
+		})
+	}).catch(err => {
+		console.log(err)
 	})
+	
 })
 
 server.listen(5000, () => {
